@@ -1,5 +1,7 @@
+import io.qameta.allure.Description;
 import utils.NewUserApi;
 import utils.NecessaryLinks;
+import utils.WebDriverFactor; // Импорт класса WebDriverFactor
 import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
@@ -11,10 +13,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import pageobject.*;
-
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Properties;
 import java.util.UUID;
 
-import static utils.WebDriverFactor.getWebDriver;
 import static org.hamcrest.Matchers.*;
 
 @DisplayName("Проверки личного кабинета пользователя")
@@ -28,20 +32,31 @@ public class ProfilePageTest {
     private String name, email, password;
     private NewUserApi newUserApi;
 
-    @Parameterized.Parameters(name="Browser {0}")
+    @Parameterized.Parameters(name = "Browser {0}")
     public static Object[][] initParams() {
-        return new Object[][] {
-                {"chrome"},
-                {"yandex"}
-        };
+        // Загружаем настройки из файла config.properties
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream("src/main/resources/config.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load config.properties", e);
+        }
+
+        // Получаем список браузеров из файла
+        String browsers = properties.getProperty("browsers", "chrome,yandex"); // Значение по умолчанию
+        return Arrays.stream(browsers.split(","))
+                .map(browser -> new Object[]{browser.trim()})
+                .toArray(Object[][]::new);
     }
+
     public ProfilePageTest(String browserName) {
         this.browserName = browserName;
     }
+
     @Before
     @Step("Запуск браузера, подготовка тестовых данных")
     public void startUp() {
-        driver = getWebDriver(browserName);
+        driver = WebDriverFactor.getWebDriver();
         driver.get(NecessaryLinks.URL_MAIN_PAGE);
 
         authorizationPage = new AuthorizationPage(driver);
@@ -86,7 +101,8 @@ public class ProfilePageTest {
     }
     @Test
     @DisplayName("Проверка перехода по клику на «Личный кабинет»")
-    public void checkLinkToProfileIsSuccess() {
+    @Description("Проверка перехода по клику на «Личный кабинет»")
+    public void checkLinkToProfileIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         goToProfile();
@@ -99,7 +115,8 @@ public class ProfilePageTest {
     }
     @Test
     @DisplayName("Проверка перехода из личного кабинета по клику на «Конструктор»")
-    public void checkLinkToConstructorIsSuccess() {
+    @Description("Проверка перехода из личного кабинета по клику на «Конструктор»")
+    public void checkLinkToConstructorIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         goToProfile();
@@ -115,7 +132,8 @@ public class ProfilePageTest {
     }
     @Test
     @DisplayName("Проверка перехода из личного кабинета по клику на логотип Stellar Burgers")
-    public void checkLinkOnLogoIsSuccess() {
+    @Description("Проверка перехода из личного кабинета по клику на логотип Stellar Burgers")
+    public void checkLinkOnLogoIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         goToProfile();
@@ -131,7 +149,8 @@ public class ProfilePageTest {
     }
     @Test
     @DisplayName("Проверка выхода из личного кабинета по клику на кнопку Выйти")
-    public void checkLinkLogOutIsSuccess() {
+    @Description("Проверка выхода из личного кабинета по клику на кнопку Выйти")
+    public void checkLinkLogOutIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         goToProfile();

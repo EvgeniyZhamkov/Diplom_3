@@ -1,3 +1,4 @@
+import io.qameta.allure.Description;
 import utils.NecessaryLinks;
 import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
@@ -10,10 +11,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import pageobject.MainPage;
-
-import static utils.WebDriverFactor.getWebDriver;
-//import static utils.WebDriverFactory.getWebDriver;
+import utils.WebDriverFactor;
 import static org.hamcrest.Matchers.equalTo;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Properties;
 
 @DisplayName("Проверки конструктора (главной страницы)")
 @RunWith(Parameterized.class)
@@ -23,18 +26,30 @@ public class MainPageTest {
     private MainPage mainPage;
     @Parameterized.Parameters(name="Browser {0}")
     public static Object[][] initParams() {
-        return new Object[][] {
-                {"chrome"},
-                {"yandex"}
-        };
+        // Загружаем настройки из файла config.properties
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream("src/main/resources/config.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load config.properties", e);
+        }
+
+        // Получаем список браузеров из файла
+        String browsers = properties.getProperty("browsers", "chrome,yandex"); // Значение по умолчанию
+        return Arrays.stream(browsers.split(","))
+                .map(browser -> new Object[]{browser.trim()})
+                .toArray(Object[][]::new);
     }
+
     public MainPageTest(String browserName) {
         this.browserName = browserName;
     }
+
     @Before
     @Step("Запуск браузера")
     public void startUp() {
-        driver = getWebDriver(browserName);
+        // Создаем драйвер, используя WebDriverFactor (без передачи browserName)
+        driver = WebDriverFactor.getWebDriver();
         driver.get(NecessaryLinks.URL_MAIN_PAGE);
         mainPage = new MainPage(driver);
     }
@@ -43,10 +58,12 @@ public class MainPageTest {
     public void tearDown() {
         driver.quit();
     }
+
     @Test
     @Step("Нажатие на вкладку Булки")
     @DisplayName("Проверка работы вкладки Булки в разделе с ингредиентами")
-    public void checkNavBunsIsSuccess() {
+    @Description("Проверка работы вкладки Булки в разделе с ингредиентами")
+    public void checkNavBunsIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
         int expectedLocation = mainPage.getIngredientTitleExpectedLocation();
 
@@ -62,7 +79,8 @@ public class MainPageTest {
     @Test
     @Step("Нажатие на вкладку Соусы")
     @DisplayName("Проверка работы вкладки Соусы в разделе с ингредиентами")
-    public void checkNavToppingsIsSuccess() {
+    @Description("Проверка работы вкладки Соусы в разделе с ингредиентами")
+    public void checkNavToppingsIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
         int expectedLocation = mainPage.getIngredientTitleExpectedLocation();
 
@@ -77,7 +95,8 @@ public class MainPageTest {
     @Test
     @Step("Нажатие на вкладку Начинки")
     @DisplayName("Проверка работы вкладки Начинки в разделе с ингредиентами")
-    public void checkNavFillingsIsSuccess() {
+    @Description("Проверка работы вкладки Начинки в разделе с ингредиентами")
+    public void checkNavFillingsIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
         int expectedLocation = mainPage.getIngredientTitleExpectedLocation();
 

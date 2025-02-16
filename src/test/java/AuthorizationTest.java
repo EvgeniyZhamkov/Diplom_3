@@ -1,5 +1,7 @@
+import io.qameta.allure.Description;
 import utils.NewUserApi;
 import utils.NecessaryLinks;
+import utils.WebDriverFactor; // Импорт класса WebDriverFactor
 import io.qameta.allure.Allure;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
@@ -15,10 +17,13 @@ import pageobject.PageForgottenPassword;
 import pageobject.MainPage;
 import pageobject.RegistrationPage;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Properties;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
-import static utils.WebDriverFactor.getWebDriver;
 
 @DisplayName("Авторизация пользователя")
 @RunWith(Parameterized.class)
@@ -32,13 +37,23 @@ public class AuthorizationTest {
     private String name, email, password;
     private NewUserApi newUserApi;
 
-    @Parameterized.Parameters(name="Browser {0}")
+    @Parameterized.Parameters(name = "Browser {0}")
     public static Object[][] initParams() {
-        return new Object[][] {
-                {"chrome"},
-                {"yandex"}
-        };
+        // Загружаем настройки из файла config.properties
+        Properties properties = new Properties();
+        try {
+            properties.load(new FileInputStream("src/main/resources/config.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load config.properties", e);
+        }
+
+        // Получаем список браузеров из файла
+        String browsers = properties.getProperty("browsers", "chrome,yandex"); // Значение по умолчанию
+        return Arrays.stream(browsers.split(","))
+                .map(browser -> new Object[]{browser.trim()})
+                .toArray(Object[][]::new);
     }
+
     public AuthorizationTest(String browserName) {
         this.browserName = browserName;
     }
@@ -46,7 +61,8 @@ public class AuthorizationTest {
     @Before
     @Step("Запуск браузера, подготовка тестовых данных")
     public void startUp() {
-        webDriver = getWebDriver(browserName);
+        // Создаем драйвер, используя WebDriverFactor (без передачи browserName)
+        webDriver = WebDriverFactor.getWebDriver();
         webDriver.get(NecessaryLinks.URL_MAIN_PAGE);
 
         authorizationPage = new AuthorizationPage(webDriver);
@@ -81,9 +97,11 @@ public class AuthorizationTest {
 
         authorizationPage.waitFormSubmitted();
     }
+
     @Test
     @DisplayName("Вход по кнопке «Войти в аккаунт» на главной")
-    public void authFromMainIsSuccess() {
+    @Description("Вход по кнопке «Войти в аккаунт» на главной")
+    public void authFromMainIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         mainPage.clickAuthButton();
@@ -97,9 +115,11 @@ public class AuthorizationTest {
                 equalTo("Оформить заказ")
         );
     }
+
     @Test
     @DisplayName("Вход через кнопку «Личный кабинет»")
-    public void authFromLinkToProfileIsSuccess() {
+    @Description("Вход через кнопку «Личный кабинет»")
+    public void authFromLinkToProfileIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         mainPage.clickLinkToProfile();
@@ -113,9 +133,11 @@ public class AuthorizationTest {
                 equalTo("Оформить заказ")
         );
     }
+
     @Test
     @DisplayName("Вход через кнопку в форме регистрации")
-    public void authLinkFromRegFormIsSuccess() {
+    @Description("Вход через кнопку в форме регистрации")
+    public void authLinkFromRegFormIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         webDriver.get(NecessaryLinks.URL_REGISTER_PAGE);
@@ -131,9 +153,11 @@ public class AuthorizationTest {
                 equalTo("Оформить заказ")
         );
     }
+
     @Test
     @DisplayName("Вход через кнопку в форме восстановления пароля")
-    public void authLinkFromForgotPasswordFormIsSuccess() {
+    @Description("Вход через кнопку в форме восстановления пароля")
+    public void authLinkFromForgotPasswordFormIsSuccessTest() {
         Allure.parameter("Браузер", browserName);
 
         webDriver.get(NecessaryLinks.URL_FORGOT_PASSWORD_PAGE);
