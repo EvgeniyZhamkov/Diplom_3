@@ -6,31 +6,34 @@ import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import java.util.Properties;
 
 public class WebDriverFactor {
-    public static WebDriver getWebDriver() {
-        // Создаем объект Properties
-        Properties properties = new Properties();
 
-        try {
-            // Загружаем файл config.properties
-            properties.load(new FileInputStream("src/main/resources/config.properties"));
-        } catch (IOException e) {
-            // Обработка ошибки, если файл не найден или не может быть прочитан
-            throw new RuntimeException("Failed to load config.properties", e);
+    /**
+     * Метод для создания драйвера на основе указанного имени браузера.
+     *
+     * @param browserName Имя браузера (например, "chrome", "yandex").
+     * @return Экземпляр WebDriver.
+     */
+    public static WebDriver getWebDriver(String browserName) {
+        // Проверяем, что имя браузера не пустое
+        if (browserName == null || browserName.isEmpty()) {
+            throw new IllegalArgumentException("Browser name cannot be null or empty");
         }
 
-        // Получаем значение браузера из файла
-        String browserName = properties.getProperty("browser", "chrome"); // Значение по умолчанию - "chrome"
-
-        // Создаем драйвер на основе значения из файла
-        return createDriver(browserName);
+        // Создаем драйвер на основе значения из параметра
+        return createDriver(browserName.toLowerCase());
     }
 
+    /**
+     * Приватный метод для создания драйвера на основе имени браузера.
+     *
+     * @param browserName Имя браузера (например, "chrome", "yandex").
+     * @return Экземпляр WebDriver.
+     */
     private static WebDriver createDriver(String browserName) {
         ChromeOptions options = new ChromeOptions();
-        options.setHeadless(true);
+        options.setHeadless(true); // Запускаем браузер в безголовом режиме
         options.addArguments("--no-sandbox", "--disable-dev-shm-usage");
         options.setPageLoadStrategy(PageLoadStrategy.EAGER);
 

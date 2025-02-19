@@ -8,32 +8,27 @@ import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import pageobject.RegistrationPage;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
 import utils.WebDriverFactor;
-
+import static io.qameta.allure.Allure.addAttachment;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static utils.WebDriverFactor.getWebDriver;
+
 
 @DisplayName("Регистрация пользователя")
-@RunWith(Parameterized.class)
 public class RegisterPageTest {
     private WebDriver webDriver;
     private String browserName;
     private RegistrationPage registrationPage;
     private String email, name, password;
 
-    @Parameterized.Parameters(name = "Browser {0}")
-    public static Object[][] initParams() {
+    @Before
+    @Step("Запуск браузера, подготовка тестовых данных")
+    public void startUp() {
         // Загружаем настройки из файла config.properties
         Properties properties = new Properties();
         try (InputStream input = RegisterPageTest.class.getClassLoader().getResourceAsStream("config.properties")) {
@@ -41,34 +36,31 @@ public class RegisterPageTest {
                 throw new RuntimeException("Файл config.properties не найден в ресурсах");
             }
             properties.load(input);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to load config.properties", e);
         }
 
-        // Получаем список браузеров из файла
-        String browsers = properties.getProperty("browsers", "chrome,yandex"); // Значение по умолчанию
-        return Arrays.stream(browsers.split(","))
-                .map(browser -> new Object[]{browser.trim()})
-                .toArray(Object[][]::new);
-    }
-    public RegisterPageTest(String browserName) {
-        this.browserName = browserName;
-    }
+        // Получаем имя браузера из файла
+        browserName = properties.getProperty("browser", "chrome"); // Значение по умолчанию - "chrome"
 
-    @Before
-    @Step("Запуск браузера, подготовка тестовых данных")
-    public void startUp() {
-        webDriver = WebDriverFactor.getWebDriver();
+        // Создаем драйвер, передавая имя браузера
+        webDriver = WebDriverFactor.getWebDriver(browserName);
+
+        // Открываем страницу регистрации
         webDriver.get(NecessaryLinks.URL_REGISTER_PAGE);
+
+        // Инициализируем страницу регистрации
         registrationPage = new RegistrationPage(webDriver);
 
+        // Генерация тестовых данных
         email = "email_" + UUID.randomUUID() + "@gmail.com";
         name = "name";
         password = "pass_" + UUID.randomUUID();
 
-        Allure.addAttachment("Имя", name);
-        Allure.addAttachment("Email", email);
-        Allure.addAttachment("Пароль", password);
+        // Добавляем данные в Allure отчет
+        addAttachment("Имя", name);
+        addAttachment("Email", email);
+        addAttachment("Пароль", password);
     }
 
     @After

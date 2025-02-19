@@ -9,20 +9,17 @@ import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import pageobject.*;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 
 @DisplayName("Проверки личного кабинета пользователя")
-@RunWith(Parameterized.class)
+
 public class ProfilePageTest {
     private WebDriver driver;
     private String browserName;
@@ -32,47 +29,44 @@ public class ProfilePageTest {
     private String name, email, password;
     private NewUserApi newUserApi;
 
-    @Parameterized.Parameters(name = "Browser {0}")
-    public static Object[][] initParams() {
+    @Before
+    @Step("Запуск браузера, подготовка тестовых данных")
+    public void startUp() {
         // Загружаем настройки из файла config.properties
         Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream("src/main/resources/config.properties"));
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            properties.load(fis);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load config.properties", e);
         }
 
-        // Получаем список браузеров из файла
-        String browsers = properties.getProperty("browsers", "chrome,yandex"); // Значение по умолчанию
-        return Arrays.stream(browsers.split(","))
-                .map(browser -> new Object[]{browser.trim()})
-                .toArray(Object[][]::new);
-    }
+        // Получаем имя браузера из файла
+        browserName = properties.getProperty("browser", "chrome"); // Значение по умолчанию - "chrome"
 
-    public ProfilePageTest(String browserName) {
-        this.browserName = browserName;
-    }
+        // Создаем драйвер, передавая имя браузера
+        driver = WebDriverFactor.getWebDriver(browserName);
 
-    @Before
-    @Step("Запуск браузера, подготовка тестовых данных")
-    public void startUp() {
-        driver = WebDriverFactor.getWebDriver();
+        // Открываем главную страницу
         driver.get(NecessaryLinks.URL_MAIN_PAGE);
 
+        // Инициализируем страницы
         authorizationPage = new AuthorizationPage(driver);
         mainPage = new MainPage(driver);
         profilePage = new ProfilePage(driver);
 
+        // Генерация тестовых данных
         name = "name";
         email = "email_" + UUID.randomUUID() + "@gmail.com";
         password = "pass_" + UUID.randomUUID();
 
+        // Добавляем данные в Allure отчет
         Allure.addAttachment("Имя", name);
         Allure.addAttachment("Email", email);
         Allure.addAttachment("Пароль", password);
 
+        // Создание нового пользователя через API
         newUserApi = new NewUserApi();
-        newUserApi.createUser(name, email,password);
+        newUserApi.createUser(name, email, password);
     }
     @After
     @Step("Закрытие браузера и очистка данных")

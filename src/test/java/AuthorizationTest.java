@@ -9,24 +9,20 @@ import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import pageobject.AuthorizationPage;
 import pageobject.PageForgottenPassword;
 import pageobject.MainPage;
 import pageobject.RegistrationPage;
-
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
 
 @DisplayName("Авторизация пользователя")
-@RunWith(Parameterized.class)
+
 public class AuthorizationTest {
     private WebDriver webDriver;
     private String browserName;
@@ -37,32 +33,21 @@ public class AuthorizationTest {
     private String name, email, password;
     private NewUserApi newUserApi;
 
-    @Parameterized.Parameters(name = "Browser {0}")
-    public static Object[][] initParams() {
-        // Загружаем настройки из файла config.properties
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream("src/main/resources/config.properties"));
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load config.properties", e);
-        }
-
-        // Получаем список браузеров из файла
-        String browsers = properties.getProperty("browsers", "chrome,yandex"); // Значение по умолчанию
-        return Arrays.stream(browsers.split(","))
-                .map(browser -> new Object[]{browser.trim()})
-                .toArray(Object[][]::new);
-    }
-
-    public AuthorizationTest(String browserName) {
-        this.browserName = browserName;
-    }
 
     @Before
     @Step("Запуск браузера, подготовка тестовых данных")
-    public void startUp() {
-        // Создаем драйвер, используя WebDriverFactor (без передачи browserName)
-        webDriver = WebDriverFactor.getWebDriver();
+    public void startUp() throws IOException {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("src/main/resources/config.properties")) {
+            properties.load(fis);
+        }
+
+        // Получаем имя браузера из файла config.properties
+        String browserName = properties.getProperty("browser", "chrome"); // Значение по умолчанию - "chrome"
+
+        // Создаем драйвер с указанным именем браузера
+        webDriver = WebDriverFactor.getWebDriver(browserName);
+
         webDriver.get(NecessaryLinks.URL_MAIN_PAGE);
 
         authorizationPage = new AuthorizationPage(webDriver);
@@ -74,12 +59,8 @@ public class AuthorizationTest {
         email = "email_" + UUID.randomUUID() + "@gmail.com";
         password = "pass_" + UUID.randomUUID();
 
-        Allure.addAttachment("Имя", name);
-        Allure.addAttachment("Email", email);
-        Allure.addAttachment("Пароль", password);
-
         newUserApi = new NewUserApi();
-        newUserApi.createUser(name, email,password);
+        newUserApi.createUser(name, email, password);
     }
     @After
     @Step("Закрытие браузера и очистка данных")
